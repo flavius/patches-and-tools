@@ -15,16 +15,16 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import weechat
 
-blacklisted = []
+whitelist = ["#chan1", "#chan2", "#chan3"]
 
-wl_last = 1
+if weechat.register("chanpriority", "Flavius", "0.1", "GPL3", "Allows you to set"
+        "chans with high priority; see / /* TODO */", "", ""):
 
-if weechat.register("chanpriority", "Flavius", "0.1", "GPL3", "Allows you to set chans with low priority; see / /* TODO */", "", ""):
-    if not weechat.config_is_set_plugin("blacklisted"):
-        weechat.config_set_plugin("blacklisted", "")
+    if not weechat.config_is_set_plugin("whitelist"):
+        weechat.config_set_plugin("whitelist", ",".join(whitelist))
     else:
-        t = weechat.config_get_plugin("blacklisted")
-        blacklisted = t.split(",")
+        t = weechat.config_get_plugin("whitelist")
+        whitelist = t.split(",")
 
 def on_join(data, signal, signal_data):
     global wl_last
