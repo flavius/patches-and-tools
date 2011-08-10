@@ -31,26 +31,11 @@ def on_join(data, signal, signal_data):
     buffers = weechat.infolist_get("buffer", "", "")
     buffer_cnt = infolist_number_max(buffers)
 
-    if chan not in blacklisted:
-        wl_last += 1
-        weechat.buffer_set(buffer, "number", str(wl_last))
+    if chan in whitelist:
+        #weechat.prnt("", "DEBUG: %d" % buff_number)
+        weechat.buffer_set(buffer, "number", '2')
+
     weechat.infolist_free(buffers)
-    return weechat.WEECHAT_RC_OK
-
-def on_part(data, signal, signal_data):
-    global wl_last
-    (chan, network, buffer) = joinpart_meta(data, signal, signal_data)
-    if chan not in blacklisted:
-        wl_last -= 1
-
-    return weechat.WEECHAT_RC_OK
-
-def cmd_blacklist(data, buffer, args):
-    weechat.prnt("", "-------------------")
-    weechat.prnt("", "data: " + str(data))
-    weechat.prnt("", "buffer: " + str(buffer))
-    weechat.prnt("", "args: " + str(args))
-    weechat.prnt("", "-------------------")
     return weechat.WEECHAT_RC_OK
 
 def infolist_number_max(infolist):
@@ -65,4 +50,3 @@ def joinpart_meta(data, signal, signal_data):
     return (chan, network, buffer)
 
 weechat.hook_signal("*,irc_in2_join", "on_join", "data")
-weechat.hook_signal("*,irc_in2_part", "on_part", "data")
