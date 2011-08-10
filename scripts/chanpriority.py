@@ -54,9 +54,8 @@ def cmd_blacklist(data, buffer, args):
     return weechat.WEECHAT_RC_OK
 
 def infolist_number_max(infolist):
-    while weechat.infolist_next(infolist):
-        pass
     weechat.infolist_prev(infolist)
+
     return weechat.infolist_integer(infolist, "number")
 
 def joinpart_meta(data, signal, signal_data):
