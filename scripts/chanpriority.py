@@ -1,4 +1,22 @@
-"""
+"""Set channel priority
+
+When joining channels the buffers will be arranged from high to low priority.
+Buffers containing high-priority channels will be in the head of the list:
+Positions: 2, 3, 4, ...
+They will be followed by non-high priority channels.
+
+High-priority channels can be set in plugins.conf, [var] section, using this
+directive: python.chanpriority.whitelist = "#chan1,#chan2,#chan3"
+
+Also you can define default high-priority channels in the whitelist variable,
+this list will be used when no proper config directive will be found in
+plugins.conf.
+
+HOME:
+https://github.com/OriginalCopy/patches-and-tools/blob/master/scripts/chanpriority.py
+
+LICENSE:
+
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
 the Free Software Foundation, either version 3 of the License, or
@@ -27,22 +45,24 @@ if weechat.register("chanpriority", "Flavius", "0.1", "GPL3", "Allows you to set
         whitelist = t.split(",")
 
 def on_join(data, signal, signal_data):
-    global wl_last
-    (chan, network, buffer) = join_meta(data, signal, signal_data)
+    """Used as callback, called when you join a channel
 
-    buffers = weechat.infolist_get("buffer", "", "")
-    buffer_cnt = infolist_number_max(buffers)
+    If the channel joined is in the whitelist then its buffer will be prioritized
+    """
+
+    (chan, network, buffer) = join_meta(data, signal, signal_data)
 
     if chan in whitelist:
         weechat.buffer_set(buffer, "number", "2")
 
-    weechat.infolist_free(buffers)
     return weechat.WEECHAT_RC_OK
 
-def infolist_number_max(infolist):
-    weechat.infolist_prev(infolist)
+def join_meta(data, signal, signal_data):
+    """Get meta info about the JOIN command
 
-    return weechat.infolist_integer(infolist, "number")
+    @return a tuple containing the channel and the server joined, the buffer
+    that will be opened after joining
+    """
 
 def join_meta(data, signal, signal_data):
     chan = signal_data.rpartition(":")[-1]
@@ -52,3 +72,20 @@ def join_meta(data, signal, signal_data):
     return (chan, network, buffer)
 
 weechat.hook_signal("*,irc_in2_join", "on_join", "data")
+weechat.hook_command(SCRIPT_COMMAND, "Set channel priority", "",
+"""
+When joining channels the buffers will be arranged from high to low priority.
+Buffers containing high-priority channels will be in the head of the list:
+Positions: 2, 3, 4, ...
+They will be followed by non-high priority channels.
+
+High-priority channels can be set in plugins.conf, [var] section, using this
+directive: python.chanpriority.whitelist = "#chan1,#chan2,#chan3"
+
+Also you can define default high-priority channels in the whitelist variable,
+this list will be used when no proper config directive will be found in
+plugins.conf.
+
+HOME: https://github.com/OriginalCopy/patches-and-tools/blob/master/scripts/chanpriority.py
+
+LICENSE: GPL v3""", "", "", "")
