@@ -34,8 +34,7 @@ def on_join(data, signal, signal_data):
     buffer_cnt = infolist_number_max(buffers)
 
     if chan in whitelist:
-        #weechat.prnt("", "DEBUG: %d" % buff_number)
-        weechat.buffer_set(buffer, "number", '2')
+        weechat.buffer_set(buffer, "number", "2")
 
     weechat.infolist_free(buffers)
     return weechat.WEECHAT_RC_OK
