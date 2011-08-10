@@ -28,7 +28,7 @@ if weechat.register("chanpriority", "Flavius", "0.1", "GPL3", "Allows you to set
 
 def on_join(data, signal, signal_data):
     global wl_last
-    (chan, network, buffer) = joinpart_meta(data, signal, signal_data)
+    (chan, network, buffer) = join_meta(data, signal, signal_data)
 
     buffers = weechat.infolist_get("buffer", "", "")
     buffer_cnt = infolist_number_max(buffers)
@@ -45,10 +45,11 @@ def infolist_number_max(infolist):
 
     return weechat.infolist_integer(infolist, "number")
 
-def joinpart_meta(data, signal, signal_data):
+def join_meta(data, signal, signal_data):
     chan = signal_data.rpartition(":")[-1]
     network = signal.partition(",")[0]
     buffer = weechat.buffer_search("irc", network + "." + chan)
+
     return (chan, network, buffer)
 
 weechat.hook_signal("*,irc_in2_join", "on_join", "data")
