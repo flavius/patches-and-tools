@@ -35,22 +35,47 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import weechat
 
 SCRIPT_COMMAND = "chanpriority"
-SCRIPT_AUTHOR = "Flavius"
+SCRIPT_AUTHOR = "Paul Barbu Gh. <paullik.paul@gmail.com>"
 SCRIPT_VERSION = "0.1"
 SCRIPT_NAME = "chanpriority"
 SCRIPT_LICENSE = "GPL3"
 SCRIPT_DESC = "Allows you to set high-priority channels, see /help chanpriority"
 
-whitelist = ["#chan1", "#chan2", "#chan3"]
+whitelist = []
+
+def get_whitelist(data, option, value):
+    """Assign the config values of the whitelist option to the whitelist global
+    """
+
+    global whitelist
+
+    t = weechat.config_get_plugin("whitelist")
+    whitelist = t.split(",")
+
+    return weechat.WEECHAT_RC_OK
+
+def set_whitelist(data, option, value):
+    """Sets the config directive whitelist
+    """
+    chanlist = ""
+
+    t = value.split(",")
+    for chan in t:
+        if 2 <= len(chan) and "#" == chan[0]:
+            chanlist = chanlist + chan + ","
+
+    weechat.config_set_plugin("whitelist", chanlist)
+    weechat.prnt("", "whitelist set to: '{0}'".format(chanlist))
+
+    return weechat.WEECHAT_RC_OK
 
 if weechat.register(SCRIPT_NAME, SCRIPT_AUTHOR, SCRIPT_VERSION, SCRIPT_LICENSE,
         SCRIPT_DESC, "", ""):
 
     if not weechat.config_is_set_plugin("whitelist"):
-        weechat.config_set_plugin("whitelist", ",".join(whitelist))
+        weechat.config_set_plugin("whitelist", "")
     else:
-        t = weechat.config_get_plugin("whitelist")
-        whitelist = t.split(",")
+        get_whitelist("", "", "")
 
 def on_join(data, signal, signal_data):
     """Used as callback, called when you join a channel
