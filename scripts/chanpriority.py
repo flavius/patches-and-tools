@@ -1,16 +1,17 @@
 """Set channel priority
 
+Based on the idea of Flavius Aspra <flavius.as@gmail.com>
+
 When joining channels the buffers will be arranged from high to low priority.
 Buffers containing high-priority channels will be in the head of the list:
 Positions: 2, 3, 4, ...
-They will be followed by non-high priority channels.
+They will be followed by low (normal) priority channels.
 
-High-priority channels can be set in plugins.conf, [var] section, using this
-directive: python.chanpriority.whitelist = "#chan1,#chan2,#chan3"
+High-priority channels must be set using this command:
+    /chanpriority [#channels]+
 
-Also you can define default high-priority channels in the whitelist variable,
-this list will be used when no proper config directive will be found in
-plugins.conf.
+The argument must be a list of channels separated by commas, e.g.:
+    /chanpriority #chan1,#chan2,#chan3
 
 HOME:
 https://github.com/OriginalCopy/patches-and-tools/blob/master/scripts/chanpriority.py
@@ -78,20 +79,24 @@ def join_meta(data, signal, signal_data):
     return (chan, network, buffer)
 
 weechat.hook_signal("*,irc_in2_join", "on_join", "data")
-weechat.hook_command(SCRIPT_COMMAND, "Set channel priority", "",
-"""
-When joining channels the buffers will be arranged from high to low priority.
+weechat.hook_config("plugins.var.python.chanpriority.whitelist",
+"get_whitelist", "")
+
+weechat.hook_command(SCRIPT_COMMAND, "Set channel priority", "[#channels]+",
+"""When joining channels the buffers will be arranged from high to low priority.
 Buffers containing high-priority channels will be in the head of the list:
 Positions: 2, 3, 4, ...
-They will be followed by non-high priority channels.
+They will be followed by low (normal) priority channels.
 
-High-priority channels can be set in plugins.conf, [var] section, using this
-directive: python.chanpriority.whitelist = "#chan1,#chan2,#chan3"
+High-priority channels must be set using this command:
+    /chanpriority [#channels]+
 
-Also you can define default high-priority channels in the whitelist variable,
-this list will be used when no proper config directive will be found in
-plugins.conf.
+The argument must be a list of channels separated by commas, e.g.:
+    /chanpriority #chan1,#chan2,#chan3
 
 HOME: https://github.com/OriginalCopy/patches-and-tools/blob/master/scripts/chanpriority.py
 
-LICENSE: GPL v3""", "", "", "")
+LICENSE: GPL v3
+
+Based on the idea of Flavius Aspra <flavius.as@gmail.com>
+""", "", "set_whitelist", "")
