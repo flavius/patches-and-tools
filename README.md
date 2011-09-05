@@ -9,6 +9,7 @@ them somewhere. Among the projects have been:
  * Yii Framework
  * WikyBlog
  * Lithium Framework
+ * Pyrus
 
 I also keep here small tools and scripts I've written, some of them
 are useless, others are for a specific type of usage under a
