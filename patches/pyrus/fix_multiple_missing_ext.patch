@@ -1,0 +1,64 @@
+commit e670c216973e37b20c0e5eff5e656ea0a4c916af
+Author: Flavius Aspra <flavius.as@gmail.com>
+Date:   Mon Sep 5 22:53:53 2011 +0200
+
+    not expecting anymore that the user recompiles php, just to see he has to recompile it again for a new required extension
+
+diff --git a/scripts/pyrus b/scripts/pyrus
+index d5e8e62..e3f4e58 100755
+--- a/scripts/pyrus
++++ b/scripts/pyrus
+@@ -8,15 +8,20 @@ if (version_compare(phpversion(), '5.3.1', '<')) {
+     }
+ }
+ 
++$missing_extensions = array();
+ foreach (array('phar', 'spl', 'pcre', 'simplexml', 'libxml', 'xmlreader', 'sqlite3')
+          as $ext) {
+     if (!extension_loaded($ext)) {
+-        echo "The $ext extension is required.\n"
+-             . "You must compile PHP with $ext enabled, "
+-             . "or install the necessary extension for your distribution.\n";
+-        exit(1);
++        $missing_extensions[] = $ext;
+     }
+ }
++if($missing_extensions) {
++    echo "You must compile PHP with the following extensions enabled:\n",
++        implode(', ', $missing_extensions), "\n",
++        "or install the necessary extensions for your distribution.\n";
++    exit(1);
++}
++unset($missing_extensions);
+ 
+ // Reject old libxml installations
+ // moved to version 2.6.20 so XMLReader::setSchema can be used.
+diff --git a/stub.php b/stub.php
+index 71e4864..3a082eb 100644
+--- a/stub.php
++++ b/stub.php
+@@ -8,15 +8,20 @@ if (version_compare(phpversion(), '5.3.1', '<')) {
+     }
+ }
+ 
++$missing_extensions = array();
+ foreach (array('phar', 'spl', 'pcre', 'simplexml', 'libxml', 'xmlreader', 'sqlite3')
+          as $ext) {
+     if (!extension_loaded($ext)) {
+-        echo "The $ext extension is required.\n"
+-             . "You must compile PHP with $ext enabled, "
+-             . "or install the necessary extension for your distribution.\n";
+-        exit(1);
++        $missing_extensions[] = $ext;
+     }
+ }
++if($missing_extensions) {
++    echo "You must compile PHP with the following extensions enabled:\n",
++        implode(', ', $missing_extensions), "\n",
++        "or install the necessary extensions for your distribution.\n";
++    exit(1);
++}
++unset($missing_extensions);
+ 
+ // Reject old libxml installations
+ // moved to version 2.6.20 so XMLReader::setSchema can be used.
