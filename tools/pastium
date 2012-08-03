@@ -1,0 +1,196 @@
+#!/usr/bin/env php
+<?php
+$self = array_shift($argv);
+$help = getCommandsHelp($self);
+if(isset($argv[0]) && isset($help[$argv[0]])) {
+	$command = $argv[0];
+	array_shift($argv);
+}
+else {
+	$command = 'help';
+}
+echo call_user_func_array($command,$argv);
+
+function export($path,$params=array()) {
+	//TODO parse params
+	return 'The new paste is at http://pastium.org/view/'.pastium(implode("\n",buildRecursive($path)),'flavius').PHP_EOL;
+}
+function import($url) {
+	$url_meta= parse_url($url);
+	if(!preg_match('/^(www.)?pastium.org$/',$url_meta['host'])) {
+		return FALSE;
+	}
+	$id = array_filter(explode('/',$url_meta['path']));
+	if(count($id) !== 2 && $id[0] !== 'view') {
+		return FALSE;
+	}
+	$id = $id[2];
+	$data = file('http://pastium.org/view/'.$id.'.txt');
+	$data = unpastium($data);
+	foreach($data as $file => $content) {
+		if('.' !== $dir = dirname($file)) {
+			if(!is_dir($dir)) {
+				mkdir($dir,0777,TRUE);
+			}
+		}
+		file_put_contents($file,rtrim($content));
+	}
+}
+function help($command='help') {
+	global $self;
+	$help = getCommandsHelp($self);
+	echo $help[$command];
+}
+
+
+
+function getCommandsHelp($self) {
+	$strategies = array();
+	$strategies['export'] = <<<EOD
+$self export <path> [parse_str()-like parameters]
+
+Paste all the files at the given <path>
+
+The last parameters which can be specified are:
+author		- defaults to getenv('USER') and must be alphanumeric
+language	- defaults to "php"
+remember	- can be set to 1. defaults to 0 (not used)
+permanent	- make the paste permanent. defaults to 0
+
+EOD;
+	$strategies['import'] = <<<EOD
+$self import <URL>
+
+Import the paste exported with this tool to the current working directory
+
+EOD;
+	$strategies['help'] = <<<EOD
+$self help <command>
+
+Show help for the <command>
+
+Available commands are: import, export.
+
+EOD;
+	return $strategies;
+}
+
+/**
+ * send new paste to pastium.org
+ */
+function pastium($content,$author,$language='php',$remember=0,$permanent=0) {
+	$ch = curl_init('http://pastium.org/add');
+	$opts = array(
+		CURLOPT_HEADER => TRUE,
+		CURLOPT_POST => TRUE,
+		CURLOPT_RETURNTRANSFER => TRUE,
+		CURLOPT_POSTFIELDS => compact('content','author','language','remember','permanent'),
+	);
+	if(!curl_setopt_array($ch,$opts)) {
+		return FALSE;
+	}
+	$headers = curl_exec($ch);
+	$headers = explode("\r\n\r\n",$headers);
+	if('HTTP/1.1 100 Continue' === $headers[0]) {
+		$headers = $headers[1];
+	}
+	else {
+		$headers = $headers[0];
+	}
+	$headers = explode("\r\n",$headers);
+	$t = array();
+	foreach($headers as $head) {
+		$t2 = preg_split('/:? /',$head,2);
+		$t[$t2[0]] = $t2[1];
+	}
+	$headers = $t;
+	if($headers['HTTP/1.1'] !== '302 Found') {
+		return FALSE;
+	}
+	return substr($headers['Location'],6);
+}
+
+/**
+ * build the paste content recursively
+ */
+function buildRecursive($path) {
+	$r = array('/**',
+		' * This is an automatic paste of an entire project.',
+		' * Its file and directory structure looks like following:',
+		' *',
+		' * --------------------------------------------------------------------------',
+	);
+	//$path_length = strlen($path);
+	$start_filemap = count($r);
+	chdir($path);
+	$dir = new RecursiveDirectoryIterator('.', FilesystemIterator::KEY_AS_PATHNAME |
+		FilesystemIterator::CURRENT_AS_FILEINFO |
+		FilesystemIterator::SKIP_DOTS);
+	$tree = new RecursiveTreeIterator($dir, RecursiveTreeIterator::BYPASS_KEY,
+		CachingIterator::CATCH_GET_CHILD, RecursiveIteratorIterator::SELF_FIRST );
+	$tree->setPrefixPart(RecursiveTreeIterator::PREFIX_LEFT,'');
+	$map = array();
+	$max_length = 0;
+	foreach($tree as $key => $item) {
+		$r[] = $t = ' * ' . $item;
+		$max_length = max($max_length,strlen($t));
+		$map[$key] = $start_filemap++;
+	}
+	$r[] = ' * --------------------------------------------------------------------------';
+	$r[] = ' *';
+	$r[] = ' * In parenthesis you can see the line numbers where each file starts';
+	$r[] = ' * within this paste.';
+	$r[] = ' * Additionally, every begin of a file starts with the marker:';
+	$r[] = ' *';
+	$r[] = ' * FILE: [ foo.txt ] --------------------------------------------------------';
+	$r[] = ' *';
+	$r[] = ' * So you may want to CTRL+F/highlight in your browser for "FILE: [".';
+	$r[] = ' * ';
+	/**
+	$r[] = ' *       Note: the tool used to pastebin this code can also import';
+	$r[] = ' *       it to your harddisk.';
+	$r[] = ' *       For more information visit http://yet-another-project/pastium.html';
+	$r[] = ' * ';
+	/**/
+	$r[] = ' */';
+	$r[0] = $r[0] . ' PASTIUM/0.1 SKIP: '.count($r);
+
+	$dir->rewind();
+	$it = new RecursiveIteratorIterator($dir);
+	foreach($it as $item) {
+		$data = file($item);
+		//$t = sprintf('// FILE: [ %s ] (%d LOCs) ', substr($item,$path_length), $data_length = count($data));
+		$t = sprintf('// FILE: [ %s ] (%d LOCs) ', $item, $data_length = count($data));
+		$r[] = str_pad($t,78,'-');
+		$t = $map[(string)$item];
+		$data = array_map('rtrim',$data);
+		if(count($data) > 1 && ($data[0] === '<?php' || 
+				$data[0] === '#!/usr/bin/env php' && $data[1] === '<?php') &&
+				$data[count($data)-1] !== '?>') {
+			$data[] = '?>';
+		}
+		$r[$t] = str_pad($r[$t],$max_length+2) . '('. count($r)  .')';
+		$r = array_merge($r,$data);
+	}
+	return $r;
+}
+
+function unpastium(array $data) {
+	sscanf($data[0],'/** PASTIUM/%f SKIP: %d',$proto_ver, $start);
+	//var_dump(compact('proto_ver','start'));
+	$data = array_slice($data,$start);
+	$r = array();
+	$in_file = NULL;
+	foreach($data as $index => $rawline) {
+		if(1 === preg_match('#// FILE: \[ ([^\]]+) \] \(\d+ LOCs\) -*#',$rawline,$matches)) {
+		//	var_dump($t);
+		//	var_dump($matches);
+			$in_file = $matches[1];
+			$r[$in_file] = '';
+		}
+		elseif($in_file) {
+			$r[$in_file] .= $rawline;
+		}
+	}
+	return $r;
+}
