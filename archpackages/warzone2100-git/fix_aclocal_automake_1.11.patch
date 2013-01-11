@@ -1,0 +1,60 @@
+From 4984f5bbf3559c1b952beb64e61560e023ed1251 Mon Sep 17 00:00:00 2001
+From: Flavius Aspra <flavius.as@gmail.com>
+Date: Fri, 11 Jan 2013 19:01:55 +0100
+Subject: [PATCH] fix autogen for automake 1.11 on ArchLinux
+
+---
+ autogen.sh | 16 ++++++++--------
+ 1 file changed, 8 insertions(+), 8 deletions(-)
+
+diff --git a/autogen.sh b/autogen.sh
+index f6f1749..75602f4 100755
+--- a/autogen.sh
++++ b/autogen.sh
+@@ -148,13 +148,13 @@ not_version ()
+ # Chdir to the srcdir, then run auto* tools.
+ cd "$SRCDIR"
+ 
+-version_check 0 "automake" "ftp://ftp.gnu.org/pub/gnu/automake/" 1 12 && {
++version_check 0 "automake-1.11" "ftp://ftp.gnu.org/pub/gnu/automake/" 1 12 && {
+   echo "Sorry, automake 1.12+ is not supported yet, please use 1.11."
+   exit 1
+ }
+ 
+ version_check 1 "autoconf" "ftp://ftp.gnu.org/pub/gnu/autoconf/" 2 56 || DIE=1
+-version_check 1 "automake" "ftp://ftp.gnu.org/pub/gnu/automake/" 1 11 || DIE=1
++version_check 1 "automake-1.11" "ftp://ftp.gnu.org/pub/gnu/automake/" 1 11 || DIE=1
+ if [ "$DIE" -eq 1 ]; then
+   exit 1
+ fi
+@@ -164,10 +164,10 @@ fi
+   exit 1
+ }
+ 
+-echo "+ running aclocal ..."
+-aclocal -I m4 || {
++echo "+ running aclocal-1.11 ..."
++aclocal-1.11 -I m4 || {
+   echo
+-  echo "aclocal failed - check that all needed development files are present on system"
++  echo "aclocal-1.11 failed - check that all needed development files are present on system"
+   exit 1
+ }
+ echo "+ running autoheader ... "
+@@ -182,10 +182,10 @@ autoconf || {
+   echo "autoconf failed"
+   exit 1
+ }
+-echo "+ running automake ... "
+-automake -a -c --foreign || {
++echo "+ running automake-1.11 ... "
++automake-1.11 -a -c --foreign || {
+   echo
+-  echo "automake failed"
++  echo "automake-1.11 failed"
+   exit 1
+ }
+ 
+-- 
+1.8.1
+

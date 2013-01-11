@@ -1,0 +1,42 @@
+# Maintainer: Lari Tikkanen <lartza@wippies.com>
+pkgname=warzone2100-git
+pkgver=20130111
+pkgrel=1
+pkgdesc="3D realtime strategy game on a future Earth (Git version)"
+arch=('i686' 'x86_64')
+url="http://wz2100.net/"
+license=('GPL')
+depends=('gettext' 'qt' 'libtheora' 'openal' 'libvorbis' 'glew' 'physfs' 'quesoglc' 'ttf-dejavu')
+makedepends=('zip' 'unzip')
+provides=('warzone' 'warzone2100' 'warzone-svn' 'warzone2100-beta')
+conflicts=('warzone2100')
+source=('fix_aclocal_automake_1.11.patch')
+md5sums=('a27510fd3cb84dec69beec10041db766')
+
+_gitroot="git://github.com/Warzone2100/warzone2100.git"
+_gitname="warzone2100"
+
+build() {
+  cd $srcdir
+
+  if [[ -d $srcdir/$_gitname ]] ; then
+	cd $_gitname
+	git pull origin
+  else
+	git clone $_gitroot $_gitname --depth=1
+  fi
+
+  cd $srcdir/$_gitname
+  
+  git apply ../../fix_aclocal_automake_1.11.patch
+
+  ./autogen.sh
+  ./configure --prefix=/usr --with-backend=qt
+  make
+}
+
+package() {
+  cd $srcdir/$_gitname
+
+  make DESTDIR=$pkgdir install
+}
